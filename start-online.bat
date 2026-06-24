@@ -55,7 +55,7 @@ echo  Close this window to stop the tunnel
 echo ============================================
 echo.
 
-start "MusicHubTunnel" /min "%CLOUDFLARED%" tunnel --url http://localhost:3000 --metrics localhost:33333
+start "MusicHubTunnel" /min "%CLOUDFLARED%" tunnel --url http://localhost:3000 --protocol http2 --metrics localhost:33333
 
 timeout /t 5 /nobreak >nul
 

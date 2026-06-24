@@ -4,8 +4,6 @@ title MusicHub
 setlocal enabledelayedexpansion
 
 set APP_DIR=%~dp0
-set API_DIR=%APP_DIR%node_modules\NeteaseCloudMusicApi
-set HTML_FILE=%APP_DIR%index.html
 
 echo ============================================
 echo       MusicHub - Starting Services
@@ -22,10 +20,10 @@ if %errorlevel% neq 0 (
 
 curl -s http://localhost:3000 >nul 2>nul
 if %errorlevel% equ 0 (
-    echo [OK] API server already running on port 3000
+    echo [OK] Server already running on http://localhost:3000
 ) else (
-    echo [..] Starting Netease Music API server...
-    start /min "NeteaseMusicAPI" node "%API_DIR%\app.js"
+    echo [..] Starting MusicHub server...
+    start /min "MusicHubServer" node "%APP_DIR%server.js"
 
     set WAIT_COUNT=0
     :WAIT_LOOP
@@ -38,19 +36,19 @@ if %errorlevel% equ 0 (
         )
         echo [WARN] Server start may be slow, opening browser anyway
     ) else (
-        echo [OK] API server ready!
+        echo [OK] Server ready!
     )
 )
 
 echo.
 echo [OPEN] Launching MusicHub...
-start "" "%HTML_FILE%"
+start "" http://localhost:3000
 
 echo.
 echo ============================================
-echo  Server: http://localhost:3000
+echo  MusicHub is running at http://localhost:3000
 echo  Close this window - server stays running
-echo  To stop: close the NeteaseMusicAPI cmd window
+echo  To stop: close the MusicHubServer cmd window
 echo  Location: %APP_DIR%
 echo ============================================
 timeout /t 5 /nobreak >nul

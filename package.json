@@ -1,0 +1,13 @@
+{
+  "name": "music-hub",
+  "version": "1.0.0",
+  "description": "音乐聚合搜索 - 多源在线听歌",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "NeteaseCloudMusicApi": "^4.32.0",
+    "express": "^4.18.0"
+  }
+}

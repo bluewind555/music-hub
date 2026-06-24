@@ -5,6 +5,7 @@ setlocal enabledelayedexpansion
 
 set APP_DIR=%~dp0
 set CLOUDFLARED=%APP_DIR%bin\cloudflared.exe
+set METRICS_PORT=45678
 
 echo ============================================
 echo    MusicHub Online - Starting Services
@@ -31,56 +32,54 @@ taskkill /f /im node.exe /fi "WINDOWTITLE eq MusicHubServer" >nul 2>nul
 taskkill /f /im cloudflared.exe >nul 2>nul
 timeout /t 2 /nobreak >nul
 
-:: Start Node.js server (serves both frontend + API)
+:: Start Node.js server
 echo [..] Starting MusicHub server...
 start "MusicHubServer" /min node "%APP_DIR%server.js"
 timeout /t 4 /nobreak >nul
 
-:: Check server is running
+:: Verify server
 curl -s http://localhost:3000 >nul 2>nul
 if %errorlevel% equ 0 (
     echo [OK] Server is running on http://localhost:3000
 ) else (
-    echo [WARN] Server may not be ready yet
+    echo [WARN] Server may not be ready yet, continuing...
 )
 
-:: Start Cloudflare Tunnel
+:: Start Cloudflare Tunnel in a normal (non-minimized) window
 echo.
-echo [..] Creating Cloudflare Tunnel (free, no account needed)...
+echo [..] Creating Cloudflare Tunnel...
 echo.
-echo ============================================
-echo  The tunnel URL will appear below (xxx.trycloudflare.com)
-echo  Share this URL with other devices to access MusicHub
-echo  Close this window to stop the tunnel
-echo ============================================
+start "MusicHubTunnel" "%CLOUDFLARED%" tunnel --url http://localhost:3000 --protocol http2 --metrics localhost:%METRICS_PORT%
+
+echo  Waiting for tunnel to connect...
 echo.
+timeout /t 12 /nobreak >nul
 
-start "MusicHubTunnel" /min "%CLOUDFLARED%" tunnel --url http://localhost:3000 --protocol http2 --metrics localhost:33333
-
-timeout /t 5 /nobreak >nul
-
-:: Try to detect the tunnel URL by querying the metrics endpoint
+:: Try to extract the tunnel URL from cloudflared's metrics
 echo [..] Detecting tunnel URL...
-for /f "tokens=*" %%a in ('curl -s http://localhost:33333/metrics 2^>nul ^| findstr "userHostnames"') do (
-    set "TUNNEL_URL=%%a"
+set "TUNNEL_URL="
+for /f "tokens=*" %%a in ('curl -s http://localhost:%METRICS_PORT%/metrics 2^>nul ^| findstr "userHostnames="') do (
+    set "TUNNEL_LINE=%%a"
 )
-if defined TUNNEL_URL (
-    echo [OK] Tunnel URL detected
-) else (
-    echo [INFO] Open the MusicHubTunnel window to see the URL
+if defined TUNNEL_LINE (
+    :: Extract URL between quotes
+    for /f tokens^=2^ delims^=^" %%b in ("!TUNNEL_LINE!") do set "TUNNEL_URL=%%b"
 )
 
 echo.
 echo ============================================
-echo  Your MusicHub is now ONLINE!
+echo  Your MusicHub is ONLINE!
 echo.
-echo  Step 1: Find the tunnel URL in "MusicHubTunnel" window
-echo         It looks like: https://xxx.trycloudflare.com
+if defined TUNNEL_URL (
+    echo  Public URL: !TUNNEL_URL!
+) else (
+    echo  Look in the "MusicHubTunnel" window for the URL
+    echo  It looks like: https://xxx.trycloudflare.com
+)
 echo.
-echo  Step 2: Open that URL on any device (phone, other PC)
-echo         The music search and playback will work!
+echo  Open the URL on any device to use MusicHub!
 echo.
-echo  NOTE: This PC must stay on for others to access
+echo  Close THIS window to stop all services.
 echo ============================================
 echo.
 echo [OPEN] Opening local MusicHub...
@@ -90,10 +89,10 @@ echo.
 echo Press any key to stop all services...
 pause >nul
 
-:: Cleanup on exit
+:: Cleanup
 echo [..] Stopping services...
 taskkill /f /im node.exe /fi "WINDOWTITLE eq MusicHubServer" >nul 2>nul
 taskkill /f /im cloudflared.exe >nul 2>nul
-echo [OK] All services stopped.
+echo [OK] Stopped.
 timeout /t 2 /nobreak >nul
 exit

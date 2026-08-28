@@ -53,7 +53,8 @@ MusicHub/
 ├── start.bat              # 本地启动脚本
 ├── start-online.bat       # 在线模式脚本（Cloudflare Tunnel）
 ├── stop.bat               # 停止服务脚本
-├── fly.toml               # Fly.io 部署配置（备用）
+├── .nvmrc                 # Node 版本锁定（Railway 部署用）
+├── fly.toml               # Fly.io 旧配置（已改用 Railway，可删）
 ├── bin/
 │   └── cloudflared.exe    # Cloudflare 隧道客户端
 └── node_modules/          # 依赖
@@ -67,18 +68,31 @@ MusicHub/
 - **API**: [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) v4.32
 - **远程访问**: Cloudflare Tunnel
 
-## 📦 部署到云服务器
+## 📦 部署到 Railway（免费云托管）
 
-本项目支持部署到 Fly.io（需绑定信用卡验证）：
+本项目已部署到 Railway，免费额度足够一个小型常驻服务长期运行。
 
-```bash
-# 安装 flyctl
-# 登录后执行
-fly launch
-fly deploy
-```
+**在线访问**：https://music-hub-production.up.railway.app
 
-详见 `fly.toml` 配置文件。
+### 从零部署步骤
+
+1. 将代码推送到 GitHub 仓库
+2. 在 [railway.app](https://railway.app) 新建项目 → **Deploy from GitHub** → 选择本仓库
+3. Railway 自动识别为 Node.js 项目（Nixpacks 构建），无需额外配置：
+   - 依赖安装：`npm install`
+   - 启动命令：`node server.js`（来自 `package.json` 的 `start`）
+   - Node 版本：由仓库根目录 `.nvmrc` 锁定为 20
+4. 部署完成后，Railway 分配公网域名（格式 `xxx.up.railway.app`）
+
+### 自动重新部署
+
+每次向 `master` 分支推送代码，Railway 会自动重新构建并部署。
+
+### 常见问题
+
+- **启动报错 `ENOENT ... /tmp/anonymous_token`**：Railway 容器内没有 `/tmp` 目录，而 `NeteaseCloudMusicApi` 启动时会无容错地读写该文件。已在 `server.js` 中把临时目录重定向到应用目录下的 `.tmp/` 解决，无需额外配置。
+- **免费额度**：Railway 按秒计费，本服务月耗约 $0.3~0.5，在免费额度内可长期运行。搜索、播放、下载歌曲均直连网易 CDN，不消耗 Railway 流量。
+- **旧配置**：`fly.toml` 为早期 Fly.io 部署遗留，已弃用，可删除。
 
 ## 📄 许可证
 

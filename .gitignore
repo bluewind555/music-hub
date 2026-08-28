@@ -1,6 +1,7 @@
 node_modules/
 bin/
 .env
+.tmp/
 *.log
 .DS_Store
 Thumbs.db

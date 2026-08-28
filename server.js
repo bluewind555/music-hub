@@ -1,9 +1,23 @@
 const express = require('express');
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
 const API_PORT = process.env.API_PORT || 3001;
+
+// Railway 等容器里 /tmp 目录可能不存在,而 NeteaseCloudMusicApi 加载时会
+// 在 os.tmpdir() 下读写 anonymous_token 且无容错,直接启动崩溃(ENOENT)。
+// 这里把临时目录重定向到应用自己的可写目录,并预创建空 token 文件。
+const TMP_DIR = process.env.TMPDIR || path.join(__dirname, '.tmp');
+process.env.TMPDIR = TMP_DIR;
+if (!fs.existsSync(TMP_DIR)) {
+  fs.mkdirSync(TMP_DIR, { recursive: true });
+}
+const tokenFile = path.join(TMP_DIR, 'anonymous_token');
+if (!fs.existsSync(tokenFile)) {
+  fs.writeFileSync(tokenFile, '', 'utf-8');
+}
 
 // Inline proxy — forwards requests to the internal Netease API
 function proxyAPI(req, res) {
@@ -16,7 +30,6 @@ function proxyAPI(req, res) {
   };
 
   const proxyReq = http.request(options, (proxyRes) => {
-    // Forward response status and headers
     res.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(res);
   });
@@ -28,7 +41,6 @@ function proxyAPI(req, res) {
     }
   });
 
-  // Forward request body (if any)
   req.pipe(proxyReq);
 }
 

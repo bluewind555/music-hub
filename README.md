@@ -54,7 +54,6 @@ MusicHub/
 ├── start-online.bat       # 在线模式脚本（Cloudflare Tunnel）
 ├── stop.bat               # 停止服务脚本
 ├── .nvmrc                 # Node 版本锁定（Railway 部署用）
-├── fly.toml               # Fly.io 旧配置（已改用 Railway，可删）
 ├── bin/
 │   └── cloudflared.exe    # Cloudflare 隧道客户端
 └── node_modules/          # 依赖
@@ -92,7 +91,6 @@ MusicHub/
 
 - **启动报错 `ENOENT ... /tmp/anonymous_token`**：Railway 容器内没有 `/tmp` 目录，而 `NeteaseCloudMusicApi` 启动时会无容错地读写该文件。已在 `server.js` 中把临时目录重定向到应用目录下的 `.tmp/` 解决，无需额外配置。
 - **免费额度**：Railway 按秒计费，本服务月耗约 $0.3~0.5，在免费额度内可长期运行。搜索、播放、下载歌曲均直连网易 CDN，不消耗 Railway 流量。
-- **旧配置**：`fly.toml` 为早期 Fly.io 部署遗留，已弃用，可删除。
 
 ## 📄 许可证
 
